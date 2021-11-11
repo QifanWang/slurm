@@ -4119,6 +4119,14 @@ extern int kill_running_job_by_node_name(char *node_name)
 		}
 
 		if (IS_JOB_COMPLETING(job_ptr)) {
+			/*
+			 * While this does work for cloud and down nodes, it
+			 * could leave the job in a completing state if it's
+			 * expecting and epilog to come back. So this doesn't
+			 * work.
+			 */
+			//if (job_ptr->epilog_running)
+			//	continue;
 			if (!bit_test(job_ptr->node_bitmap_cg, node_inx))
 				continue;
 			kill_job_cnt++;
@@ -4129,8 +4137,10 @@ extern int kill_running_job_by_node_name(char *node_name)
 			else {
 				error("node_cnt underflow on %pJ", job_ptr);
 			}
-			if (job_ptr->node_cnt == 0)
+			if (job_ptr->node_cnt == 0) {
 				cleanup_completing(job_ptr);
+				batch_requeue_fini(job_ptr);
+			}
 
 			if (node_ptr->comp_job_cnt)
 				(node_ptr->comp_job_cnt)--;
