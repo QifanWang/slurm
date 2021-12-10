@@ -1323,7 +1323,7 @@ static int _process_command (int argc, char **argv)
 		}
 	}
 	else if (xstrncasecmp(tag, "show", MAX(tag_len, 3)) == 0) {
-		_show_it (argc, argv);
+		_show_it (argc, argv); // 1st found
 	}
 	else if (xstrncasecmp(tag, "write", MAX(tag_len, 5)) == 0) {
 		if (argc < 2) {
@@ -1714,6 +1714,7 @@ static void _show_it(int argc, char **argv)
 	} else if (xstrncasecmp(tag, "slurmd", MAX(tag_len, 2)) == 0) {
 		_print_slurmd (val);
 	} else if (xstrncasecmp(tag, "steps", MAX(tag_len, 2)) == 0) {
+		// show steps // 2nd found
 		scontrol_print_step (val);
 	} else if (xstrncasecmp(tag, "topology", MAX(tag_len, 1)) == 0) {
 		scontrol_print_topo (val);

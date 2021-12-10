@@ -40,6 +40,8 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <poll.h>
 
 #include "slurm/slurm.h"
 
@@ -297,6 +299,95 @@ slurm_sprint_job_step_info ( job_step_info_t * job_step_ptr,
 	else
 		xstrcat(out, "\n\n");
 	return out;
+}
+
+/**
+ * slurm_print_job_step_middle_output - output middle stdout of a specific Slurm
+ *  job step by call sattach
+ * IN out - file to write to
+ * IN job_id
+ * IN step_id
+ * IN one_liner - print as a single line if true
+*/
+void
+slurm_print_job_step_middle_output( FILE *out, uint32_t job_id, uint32_t step_id,
+					  int one_liner )
+{
+	int ws, i, nfds, cnt;
+	char buf[1024];
+	int child_write[2];
+	pid_t cpid;
+	struct pollfd *pfds;
+
+	// create pipe
+	if(pipe(child_write) < 0) {
+		fprintf ( out, "print middle output error for pipe fail");
+		return;
+	}
+
+    // spawn a child process
+    cpid = fork();
+    if(cpid < 0) {
+        fprintf ( out, "print middle output error for fork fail");
+		// don't forget release file descriptor
+		close(child_write[0]);
+		close(child_write[1]);
+        return;
+    }
+    if(cpid == 0) {
+        // child process
+
+		// use stoutfileno as write fileno
+		close(child_write[0]);
+		dup2(child_write[1], STDOUT_FILENO);
+
+		// simple call
+        char **argv = xmalloc(2 * sizeof(char*));
+        argv[0] = "sattach";
+        argv[1] = xmalloc(1024);
+        sprintf(argv[1], "%u.%u", job_id, step_id);
+		execv(*argv, argv);
+    } 
+
+	// parent process
+
+	close(child_write[1]);
+
+
+	nfds = 1;
+	pfds = (struct pollfd*) malloc(sizeof(struct pollfd));
+	if(pfds != NULL) {
+		pfds[0].fd = child_write[0];
+		pfds[0].events = POLLIN;
+
+		poll(pfds, nfds, 2000); // wait for 2s
+		if(pfds[0].revents & POLLIN) {
+
+            if( (cnt = read(pfds[0].fd, buf, 500)) <  0 ) {
+                sprintf(buf, "read error\n");
+				cnt = 11;
+            }
+            buf[cnt] = '\0';
+            fprintf( out, "below if midlle output:\n%s", buf);
+        } else {
+            // more accurate 
+            fprintf ( out, "print middle output error for no readable middle, \
+				revent = %hu, POLLHUP = %hu, POLLERR = %hu\n", pfds[0].revents, pfds[0].revents & POLLHUP, pfds[0].revents & POLLERR);
+        }
+
+		free(pfds);
+	} else {
+		fprintf ( out, "print middle output error for memory allocation");
+	}
+
+    kill(cpid, SIGKILL);
+    if ( waitpid(cpid, &ws, 0) < 0) {
+		fprintf ( out, "print middle output error for wait child process");
+    }
+
+	close(child_write[0]);
+
+	fflush(out);
 }
 
 static int

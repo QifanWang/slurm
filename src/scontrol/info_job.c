@@ -492,6 +492,8 @@ scontrol_print_step (char *job_step_id_str)
 		    (array_id != job_step_ptr->array_task_id))
 			continue;
 		slurm_print_job_step_info(stdout, job_step_ptr, one_liner);
+		// my function is here!!!
+		slurm_print_job_step_middle_output(stdout, step_id.job_id, step_id.step_id, one_liner);
 		print_cnt++;
 	}
 
