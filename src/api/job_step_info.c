@@ -310,13 +310,17 @@ slurm_sprint_job_step_info ( job_step_info_t * job_step_ptr,
  * IN one_liner - print as a single line if true
 */
 void
-slurm_print_job_step_middle_output( FILE *out, uint32_t job_id, uint32_t step_id)
+slurm_print_job_step_middle_output( FILE *out, job_step_info_t * job_step_ptr)
 {
-	int ws, i, nfds, cnt;
+	int ws, nfds, cnt, base = 0, bound = 1024;
 	char buf[1024];
 	int child_write[2];
 	pid_t cpid;
 	struct pollfd *pfds;
+
+	// get step_id
+	snprintf(buf, 1024, "%u.%u", job_step_ptr->step_id.job_id, job_step_ptr->step_id.step_id);
+	fprintf( out, "below is midlle output of Step_ID=%s\n", buf);
 
 	// create pipe
 	if(pipe(child_write) < 0) {
@@ -341,7 +345,6 @@ slurm_print_job_step_middle_output( FILE *out, uint32_t job_id, uint32_t step_id
 		dup2(child_write[1], STDOUT_FILENO);
 
 		// call sattach
-        sprintf(buf, "%u.%u", job_id, step_id);
 		char *argv[3] = {"/usr/local/bin/sattach", buf, NULL};
 		execv(argv[0], argv);
     } 
@@ -359,13 +362,17 @@ slurm_print_job_step_middle_output( FILE *out, uint32_t job_id, uint32_t step_id
 
 		poll(pfds, nfds, 2000); // wait for 2s
 		if(pfds[0].revents & POLLIN) {
-
-            if( (cnt = read(pfds[0].fd, buf, 500)) <  0 ) {
-                sprintf(buf, "read error\n");
-				cnt = 11;
+            while((cnt = read(pfds[0].fd, buf, 512)) >  0) {
+				buf[cnt] = '\0';
+            	fprintf( out, "%s", buf);
+				base += cnt;
+				if ( base >= bound ) {
+					cnt = 0;
+					break;
+				}
             }
-            buf[cnt] = '\0';
-            fprintf( out, "below if midlle output:\n%s", buf);
+			snprintf(buf, 20, "%s", cnt < 0 ? "\nread error\n" : "\nread over\n");
+			fprintf( out, "%s", buf);
         } else {
             // more accurate 
             fprintf ( out, "print middle output error for no readable middle output, \

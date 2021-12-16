@@ -4058,12 +4058,10 @@ extern void slurm_print_job_step_info(FILE *out,
  * slurm_print_job_step_middle_output - output middle stdout of a specific Slurm
  *  job step by call sattach
  * IN out - file to write to
- * IN job_id
- * IN step_id
+ * IN job_ptr - an individual job step information record pointer
 */
 extern void slurm_print_job_step_middle_output(FILE *out,
-					  uint32_t job_id,
-					  uint32_t step_id);
+					  job_step_info_t *step_ptr);
 
 /*
  * slurm_job_step_layout_get - get the slurm_step_layout_t structure for

@@ -33,10 +33,12 @@ $ sudo slurmctld -D
 run controler daemon 
 
 type
-slurmd -D
+$ sudo slurmd -D
+run computer daemon
 
 type
-~/sattach_midout/build/sleeper
+$ srun ~/sattach_midout/build/sleeper
+$ scancel x.x   
 
 FILE AND DIRECTORY PERMISSIONS
 There are three classes of files: Files used by slurmctld must be accessible by user SlurmUser and accessible by the primary and backup control machines. Files used by slurmd must be accessible by user root and accessible from every compute node. A few files need to be accessible by normal users on all login and compute nodes. While many files and directories are listed below, most of them will not be used with most configurations.
