@@ -4060,12 +4060,10 @@ extern void slurm_print_job_step_info(FILE *out,
  * IN out - file to write to
  * IN job_id
  * IN step_id
- * IN one_liner - print as a single line if true
 */
 extern void slurm_print_job_step_middle_output(FILE *out,
 					  uint32_t job_id,
-					  uint32_t step_id,
-					  int one_liner);
+					  uint32_t step_id);
 
 /*
  * slurm_job_step_layout_get - get the slurm_step_layout_t structure for

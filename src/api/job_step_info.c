@@ -310,8 +310,7 @@ slurm_sprint_job_step_info ( job_step_info_t * job_step_ptr,
  * IN one_liner - print as a single line if true
 */
 void
-slurm_print_job_step_middle_output( FILE *out, uint32_t job_id, uint32_t step_id,
-					  int one_liner )
+slurm_print_job_step_middle_output( FILE *out, uint32_t job_id, uint32_t step_id)
 {
 	int ws, i, nfds, cnt;
 	char buf[1024];
@@ -341,12 +340,10 @@ slurm_print_job_step_middle_output( FILE *out, uint32_t job_id, uint32_t step_id
 		close(child_write[0]);
 		dup2(child_write[1], STDOUT_FILENO);
 
-		// simple call
-        char **argv = xmalloc(2 * sizeof(char*));
-        argv[0] = "sattach";
-        argv[1] = xmalloc(1024);
-        sprintf(argv[1], "%u.%u", job_id, step_id);
-		execv(*argv, argv);
+		// call sattach
+        sprintf(buf, "%u.%u", job_id, step_id);
+		char *argv[3] = {"/usr/local/bin/sattach", buf, NULL};
+		execv(argv[0], argv);
     } 
 
 	// parent process
@@ -355,7 +352,7 @@ slurm_print_job_step_middle_output( FILE *out, uint32_t job_id, uint32_t step_id
 
 
 	nfds = 1;
-	pfds = (struct pollfd*) malloc(sizeof(struct pollfd));
+	pfds = (struct pollfd*) xmalloc(sizeof(struct pollfd));
 	if(pfds != NULL) {
 		pfds[0].fd = child_write[0];
 		pfds[0].events = POLLIN;
@@ -371,11 +368,11 @@ slurm_print_job_step_middle_output( FILE *out, uint32_t job_id, uint32_t step_id
             fprintf( out, "below if midlle output:\n%s", buf);
         } else {
             // more accurate 
-            fprintf ( out, "print middle output error for no readable middle, \
+            fprintf ( out, "print middle output error for no readable middle output, \
 				revent = %hu, POLLHUP = %hu, POLLERR = %hu\n", pfds[0].revents, pfds[0].revents & POLLHUP, pfds[0].revents & POLLERR);
         }
 
-		free(pfds);
+		xfree(pfds);
 	} else {
 		fprintf ( out, "print middle output error for memory allocation");
 	}

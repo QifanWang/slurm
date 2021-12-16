@@ -1,0 +1,56 @@
+--- install and uninstall ---
+type 
+./configure --enable-debug --prefix=/home/ezio/slurmBin --sysconfdir=/home/ezio/slurmBin/etc
+to configure in user directory
+
+
+my choice:
+$ ./configure --enable-debug --with-munge=/usr/bin/munge // error
+$ ./configure --enable-debug
+to configure in  /usr/local etc // need to sudo
+
+type
+$ make install
+$ make uninstall
+
+
+configure file in /usr/local/etc/ 
+cgroup.conf  and  slurm.conf
+
+--- run ---
+
+run munge
+Make sure that all nodes in your cluster have the same munge.key. 
+Make sure the MUNGE daemon, munged is started before you start the Slurm daemons.
+
+run manually
+$ su
+$ munged
+$ sudo munged --stop // vital to do so
+
+type
+$ sudo slurmctld -D
+run controler daemon 
+
+type
+slurmd -D
+
+type
+~/sattach_midout/build/sleeper
+
+FILE AND DIRECTORY PERMISSIONS
+There are three classes of files: Files used by slurmctld must be accessible by user SlurmUser and accessible by the primary and backup control machines. Files used by slurmd must be accessible by user root and accessible from every compute node. A few files need to be accessible by normal users on all login and compute nodes. While many files and directories are listed below, most of them will not be used with most configurations.
+
+--- experiment ---
+
+scontrol show job
+
+scontrol show step
+
+sattach x.x
+
+
+--- todo ---
+change src code 
+uninstall and install
+test and writeup
